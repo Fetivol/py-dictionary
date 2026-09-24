@@ -13,8 +13,8 @@ class Node:
 class Dictionary:
     def __init__(self) -> None:
         self._capacity = 8
-        self._size = 0
-        self._table: list[Node | None] = [None] * self._capacity
+        self._length = 0
+        self._hash_table: list[Node | None] = [None] * self._capacity
 
     def _hash_index(self, key_hash: int) -> int:
         """get hash index"""
@@ -28,20 +28,20 @@ class Dictionary:
             key_hash: int
     ) -> None:
         """change size of table and create new node"""
-        self._size += 1
-        self._table[index] = Node(key, value, key_hash)
+        self._length += 1
+        self._hash_table[index] = Node(key, value, key_hash)
 
     def _check_load_factor(self) -> None:
         """Check load factor and resize it if necessary"""
-        if self._size >= int(self._capacity * 2 / 3):
+        if self._length >= int(self._capacity * 2 / 3):
             self._resize()
 
     def _resize(self) -> None:
         """Resize table, change capacity *= 2 and setitems into new indexes"""
-        old_table = self._table
+        old_table = self._hash_table
         self._capacity = self._capacity * 2
-        self._table = [None] * self._capacity
-        self._size = 0
+        self._hash_table = [None] * self._capacity
+        self._length = 0
         for node in old_table:
             if node is None:
                 continue
@@ -55,7 +55,7 @@ class Dictionary:
         index = self._hash_index(key_hash)
 
         while True:
-            current_node = self._table[index]
+            current_node = self._hash_table[index]
 
             if current_node is None:
                 self._create_node(index, key, value, key_hash)
@@ -74,7 +74,7 @@ class Dictionary:
         initial_index = index
 
         while True:
-            current_node = self._table[index]
+            current_node = self._hash_table[index]
 
             if current_node is None:
                 raise KeyError(f"No item with key = {key}")
@@ -88,12 +88,12 @@ class Dictionary:
 
     def __len__(self) -> int:
         """Get length of table"""
-        return self._size
+        return self._length
 
     def clear(self) -> None:
         """clear table"""
-        self._table = [None] * self._capacity
-        self._size = 0
+        self._hash_table = [None] * self._capacity
+        self._length = 0
 
     @staticmethod
     def _can_shift(
@@ -110,13 +110,13 @@ class Dictionary:
         """Backward Shift for collision handling after deletion"""
         backward_index = (hole_index + 1) % self._capacity
 
-        while self._table[backward_index] is not None:
-            node_to_check = self._table[backward_index]
+        while self._hash_table[backward_index] is not None:
+            node_to_check = self._hash_table[backward_index]
             ideal_index = self._hash_index(node_to_check.key_hash)
 
             if self._can_shift(hole_index, backward_index, ideal_index):
-                self._table[hole_index] = node_to_check
-                self._table[backward_index] = None
+                self._hash_table[hole_index] = node_to_check
+                self._hash_table[backward_index] = None
                 hole_index = backward_index
 
             backward_index = (backward_index + 1) % self._capacity
@@ -128,7 +128,7 @@ class Dictionary:
         initial_index = index
 
         while True:
-            current_node = self._table[index]
+            current_node = self._hash_table[index]
 
             if current_node is None:
                 raise KeyError(f"No item with key = {key}")
@@ -140,8 +140,8 @@ class Dictionary:
             if index == initial_index:
                 raise KeyError(f"No item with key = {key}")
 
-        self._table[index] = None
-        self._size -= 1
+        self._hash_table[index] = None
+        self._length -= 1
         self._shift_nodes(index)
 
     def get(self, key: Any, value: Any = None) -> Any:
@@ -151,7 +151,7 @@ class Dictionary:
         initial_index = index
 
         while True:
-            current_node = self._table[index]
+            current_node = self._hash_table[index]
 
             if current_node is None:
                 return value
@@ -170,7 +170,7 @@ class Dictionary:
         initial_index = index
 
         while True:
-            current_node = self._table[index]
+            current_node = self._hash_table[index]
 
             if current_node is None:
                 return default
@@ -183,8 +183,8 @@ class Dictionary:
                 return default
 
         popped_value = current_node.value
-        self._table[index] = None
-        self._size -= 1
+        self._hash_table[index] = None
+        self._length -= 1
         self._shift_nodes(index)
         return popped_value
 
@@ -198,4 +198,4 @@ class Dictionary:
                 self[key] = value
 
     def __iter__(self) -> DictionaryIterator:
-        return DictionaryIterator(self._table)
+        return DictionaryIterator(self._hash_table)
